@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add daily maintenance automation for deterministic dependency upkeep.
+
 ## 0.2.0
 
 - Add a composite GitHub Action wrapper for README Health.

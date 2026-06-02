@@ -90,6 +90,17 @@ Use a custom threshold:
     fail-under: "80"
 ```
 
+## Daily Maintenance
+
+This repository includes a scheduled maintenance workflow that runs every day and can also be triggered manually from GitHub Actions.
+
+The workflow:
+
+- Refreshes dependency lockfile entries with `npm update --package-lock-only`
+- Applies compatible audit fixes with `npm audit fix --package-lock-only`
+- Runs typecheck, tests, build, and README Health strict mode
+- Commits to `main` only when dependency metadata actually changes
+
 ## Example Output
 
 ```text
