@@ -1,0 +1,47 @@
+name: README Health
+description: Score a README file for maintainer readiness.
+
+inputs:
+  readme-path:
+    description: Path to the README file, relative to the repository root.
+    required: false
+    default: README.md
+  format:
+    description: Output format. Use text for workflow logs or json for machine-readable output.
+    required: false
+    default: text
+  fail-under:
+    description: Exit with failure if the README score is below this value.
+    required: false
+    default: ""
+  strict:
+    description: Use the strict score threshold of 85.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Install README Health
+      shell: bash
+      run: |
+        npm ci --prefix "$GITHUB_ACTION_PATH"
+        npm run build --prefix "$GITHUB_ACTION_PATH"
+
+    - name: Run README Health
+      shell: bash
+      env:
+        INPUT_README_PATH: ${{ inputs.readme-path }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_FAIL_UNDER: ${{ inputs.fail-under }}
+        INPUT_STRICT: ${{ inputs.strict }}
+      run: |
+        args=("$GITHUB_WORKSPACE/$INPUT_README_PATH" "--format" "$INPUT_FORMAT")
+
+        if [[ "$INPUT_STRICT" == "true" ]]; then
+          args+=("--strict")
+        elif [[ -n "$INPUT_FAIL_UNDER" ]]; then
+          args+=("--fail-under" "$INPUT_FAIL_UNDER")
+        fi
+
+        node "$GITHUB_ACTION_PATH/dist/cli.js" "${args[@]}"

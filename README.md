@@ -52,6 +52,40 @@ Output JSON for automation:
 readme-health README.md --format json
 ```
 
+## GitHub Action
+
+Run README Health in CI:
+
+```yaml
+name: README Health
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  readme-health:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: duhman/readme-health@v0.2.0
+        with:
+          readme-path: README.md
+          strict: "true"
+```
+
+Use a custom threshold:
+
+```yaml
+- uses: duhman/readme-health@v0.2.0
+  with:
+    readme-path: docs/README.md
+    fail-under: "80"
+```
+
 ## Example Output
 
 ```text
@@ -118,7 +152,6 @@ README Health scores these areas:
 ## Roadmap
 
 - Config file support for project-specific rule weights
-- GitHub Action wrapper for pull request checks
 - Optional local-only link validation
 - Suggested README patch output
 

@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import packageJson from "../package.json" with { type: "json" };
 import { runCli } from "../src/cli.js";
 import { excellentReadme, weakReadme } from "./fixtures.js";
 
@@ -99,5 +100,17 @@ describe("runCli", () => {
       score: expect.any(Number),
       findings: expect.any(Array)
     });
+  });
+
+  it("prints the package version", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--version"], {
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("").trim()).toBe(packageJson.version);
   });
 });

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { Command, InvalidArgumentError, Option } from "commander";
 
+import packageJson from "../package.json" with { type: "json" };
 import { analyzeReadme } from "./analyze.js";
 import { formatText } from "./formatText.js";
 import { ReadmeInputError } from "./types.js";
@@ -40,7 +41,7 @@ function createProgram(io: Required<CliIO>): {
   program
     .name("readme-health")
     .description("Score a local README for maintainer readiness")
-    .version("0.1.0")
+    .version(packageJson.version)
     .argument("[path]", "path to a README file", "README.md")
     .addOption(
       new Option("--format <format>", "output format")
@@ -99,7 +100,8 @@ export async function runCli(argv: string[], io: CliIO = {}): Promise<number> {
     return getExitCode();
   } catch (error) {
     if (typeof error === "object" && error !== null && "exitCode" in error) {
-      return 2;
+      const exitCode = error.exitCode;
+      return typeof exitCode === "number" && exitCode === 0 ? 0 : 2;
     }
 
     throw error;
