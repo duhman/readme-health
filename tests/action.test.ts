@@ -27,4 +27,14 @@ describe("GitHub Action wrapper", () => {
     expect(workflow).toContain("uses: ./");
     expect(workflow).toContain('strict: "true"');
   });
+
+  it("uses current GitHub Actions runtime wrappers", async () => {
+    const ciWorkflow = await readFile(".github/workflows/ci.yml", "utf8");
+    const readmeWorkflow = await readFile(".github/workflows/readme-health.yml", "utf8");
+
+    expect(ciWorkflow).toContain("actions/checkout@v6");
+    expect(ciWorkflow).toContain("actions/setup-node@v6");
+    expect(readmeWorkflow).toContain("actions/checkout@v6");
+    expect(readmeWorkflow).toContain("actions/setup-node@v6");
+  });
 });
