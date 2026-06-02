@@ -1,6 +1,10 @@
 name: README Health
 description: Score a README file for maintainer readiness.
 
+branding:
+  icon: book-open
+  color: green
+
 inputs:
   readme-path:
     description: Path to the README file, relative to the repository root.

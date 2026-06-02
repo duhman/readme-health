@@ -12,6 +12,14 @@ describe("GitHub Action wrapper", () => {
     expect(action).toContain("strict:");
   });
 
+  it("declares Marketplace branding", async () => {
+    const action = await readFile("action.yml", "utf8");
+
+    expect(action).toContain("branding:");
+    expect(action).toContain("icon: book-open");
+    expect(action).toContain("color: green");
+  });
+
   it("runs the built CLI from the action directory against the caller workspace", async () => {
     const action = await readFile("action.yml", "utf8");
 
