@@ -6,8 +6,9 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 
+import { evaluateLocalReferences } from "./localReferences.js";
 import { evaluateRules } from "./rules.js";
-import type { Grade, HealthReport, ReadmeFacts } from "./types.js";
+import type { Finding, Grade, HealthReport, ReadmeFacts } from "./types.js";
 import { ReadmeInputError } from "./types.js";
 
 type NodeWithChildren = {
@@ -134,8 +135,7 @@ function collectFacts(markdown: string): ReadmeFacts {
   return facts;
 }
 
-export function analyzeMarkdown(markdown: string, filePath: string): HealthReport {
-  const findings = evaluateRules(collectFacts(markdown));
+function createReport(filePath: string, findings: Finding[]): HealthReport {
   const score = Math.round(
     findings.reduce((total, item) => total + item.points, 0)
   );
@@ -154,10 +154,18 @@ export function analyzeMarkdown(markdown: string, filePath: string): HealthRepor
   };
 }
 
+export function analyzeMarkdown(markdown: string, filePath: string): HealthReport {
+  return createReport(filePath, evaluateRules(collectFacts(markdown)));
+}
+
 export async function analyzeReadme(filePath: string): Promise<HealthReport> {
   try {
     const markdown = await readFile(filePath, "utf8");
-    return analyzeMarkdown(markdown, filePath);
+    const facts = collectFacts(markdown);
+    return createReport(filePath, [
+      ...evaluateRules(facts),
+      await evaluateLocalReferences(facts, filePath)
+    ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new ReadmeInputError(`Unable to read ${filePath}: ${message}`);

@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Add daily maintenance automation for deterministic dependency upkeep.
+- Add warning-only validation for relative local README links and images.
+- Update README action examples to the latest released tag.
 
 ## 0.2.1
 

@@ -75,7 +75,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - uses: duhman/readme-health@v0.2.0
+      - uses: duhman/readme-health@v0.2.1
         with:
           readme-path: README.md
           strict: "true"
@@ -84,7 +84,7 @@ jobs:
 Use a custom threshold:
 
 ```yaml
-- uses: duhman/readme-health@v0.2.0
+- uses: duhman/readme-health@v0.2.1
   with:
     readme-path: docs/README.md
     fail-under: "80"
@@ -155,6 +155,7 @@ README Health scores these areas:
 - Contributing or development instructions
 - Test or verification instructions
 - Non-empty Markdown link labels
+- Relative local links and images that resolve on disk
 - Alt text on images
 - Heading levels that do not skip levels
 
@@ -167,7 +168,6 @@ README Health scores these areas:
 ## Roadmap
 
 - Config file support for project-specific rule weights
-- Optional local-only link validation
 - Suggested README patch output
 
 ## Development
