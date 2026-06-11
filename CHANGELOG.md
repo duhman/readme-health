@@ -4,6 +4,7 @@
 
 - Add daily maintenance automation for deterministic dependency upkeep.
 - Add warning-only validation for relative local README links and images.
+- Add `--fix-suggestions` for copy-pasteable README fix snippets.
 - Update README action examples to the latest released tag.
 
 ## 0.2.1

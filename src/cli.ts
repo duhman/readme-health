@@ -12,6 +12,7 @@ import { ReadmeInputError } from "./types.js";
 type CliOptions = {
   format: "text" | "json";
   failUnder?: number;
+  fixSuggestions?: boolean;
   strict?: boolean;
 };
 
@@ -49,6 +50,7 @@ function createProgram(io: Required<CliIO>): {
         .default("text")
     )
     .option("--fail-under <score>", "exit 1 if the score is below this number", parseFailUnder)
+    .option("--fix-suggestions", "append copy-pasteable README fix snippets to text output")
     .option("--strict", "equivalent to --fail-under 85")
     .exitOverride()
     .configureOutput({
@@ -64,7 +66,7 @@ function createProgram(io: Required<CliIO>): {
         if (options.format === "json") {
           io.stdout(`${JSON.stringify(report, null, 2)}\n`);
         } else {
-          io.stdout(formatText(report));
+          io.stdout(formatText(report, { includeFixSuggestions: options.fixSuggestions }));
         }
 
         if (threshold !== undefined && report.score < threshold) {

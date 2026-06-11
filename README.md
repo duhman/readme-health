@@ -52,6 +52,12 @@ Output JSON for automation:
 readme-health README.md --format json
 ```
 
+Print copy-pasteable snippets for warnings and failures:
+
+```sh
+readme-health README.md --fix-suggestions
+```
+
 ## GitHub Action
 
 Run README Health in CI:
@@ -168,7 +174,6 @@ README Health scores these areas:
 ## Roadmap
 
 - Config file support for project-specific rule weights
-- Suggested README patch output
 
 ## Development
 

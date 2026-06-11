@@ -102,6 +102,57 @@ describe("runCli", () => {
     });
   });
 
+  it("prints fix suggestions for weak README findings", async () => {
+    const cwd = await createTempProject(weakReadme);
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--fix-suggestions"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+
+    const output = stdout.join("");
+
+    expect(exitCode).toBe(0);
+    expect(output).toContain("Suggested README snippets");
+    expect(output).toContain("## Installation");
+    expect(output).toContain("## Usage");
+    expect(output).toContain("## Tests");
+    expect(output).toContain("## License");
+  });
+
+  it("keeps JSON output parseable when fix suggestions are requested", async () => {
+    const cwd = await createTempProject(weakReadme);
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--format", "json", "--fix-suggestions"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(stdout.join(""))).toMatchObject({
+      score: expect.any(Number),
+      findings: expect.any(Array)
+    });
+  });
+
+  it("explains when no fix suggestions are needed", async () => {
+    const cwd = await createTempProject(excellentReadme.replace("![Terminal report](./docs/report.png)\n\n", ""));
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--fix-suggestions"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("No fix suggestions needed.");
+  });
+
   it("prints the package version", async () => {
     const stdout: string[] = [];
 
