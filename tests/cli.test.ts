@@ -102,6 +102,150 @@ describe("runCli", () => {
     });
   });
 
+  it("applies configured rule weights from readme-health.config.json", async () => {
+    const cwd = await createTempProject(weakReadme);
+    await writeFile(join(cwd, "readme-health.config.json"), JSON.stringify({
+      ruleWeights: {
+        usage: 40
+      }
+    }), "utf8");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--format", "json"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+    const report = JSON.parse(stdout.join(""));
+    const usage = report.findings.find((finding: { id: string }) => finding.id === "usage");
+
+    expect(exitCode).toBe(0);
+    expect(usage).toMatchObject({
+      points: 0,
+      maxPoints: 40
+    });
+    expect(report.score).toBe(21);
+  });
+
+  it("uses configured failUnder when no CLI threshold is provided", async () => {
+    const cwd = await createTempProject(weakReadme);
+    await writeFile(join(cwd, "readme-health.config.json"), JSON.stringify({
+      failUnder: 80
+    }), "utf8");
+
+    const exitCode = await runCli([], {
+      cwd,
+      stdout: () => undefined,
+      stderr: () => undefined
+    });
+
+    expect(exitCode).toBe(1);
+  });
+
+  it("lets --fail-under override configured failUnder", async () => {
+    const cwd = await createTempProject(weakReadme);
+    await writeFile(join(cwd, "readme-health.config.json"), JSON.stringify({
+      failUnder: 100
+    }), "utf8");
+
+    const exitCode = await runCli(["--fail-under", "0"], {
+      cwd,
+      stdout: () => undefined,
+      stderr: () => undefined
+    });
+
+    expect(exitCode).toBe(0);
+  });
+
+  it("lets --strict override configured failUnder", async () => {
+    const cwd = await createTempProject(weakReadme);
+    await writeFile(join(cwd, "readme-health.config.json"), JSON.stringify({
+      failUnder: 0
+    }), "utf8");
+
+    const exitCode = await runCli(["--strict"], {
+      cwd,
+      stdout: () => undefined,
+      stderr: () => undefined
+    });
+
+    expect(exitCode).toBe(1);
+  });
+
+  it("returns exit code 2 for invalid JSON config", async () => {
+    const cwd = await createTempProject();
+    const stderr: string[] = [];
+    await writeFile(join(cwd, "readme-health.config.json"), "{ nope", "utf8");
+
+    const exitCode = await runCli([], {
+      cwd,
+      stdout: () => undefined,
+      stderr: (text) => stderr.push(text)
+    });
+
+    expect(exitCode).toBe(2);
+    expect(stderr.join("")).toContain("Invalid config");
+  });
+
+  it("returns exit code 2 for unknown configured rule IDs", async () => {
+    const cwd = await createTempProject();
+    const stderr: string[] = [];
+    await writeFile(join(cwd, "readme-health.config.json"), JSON.stringify({
+      ruleWeights: {
+        "local-references": 10,
+        madeUpRule: 5
+      }
+    }), "utf8");
+
+    const exitCode = await runCli([], {
+      cwd,
+      stdout: () => undefined,
+      stderr: (text) => stderr.push(text)
+    });
+
+    expect(exitCode).toBe(2);
+    expect(stderr.join("")).toContain("Unknown rule weight");
+    expect(stderr.join("")).toContain("local-references");
+  });
+
+  it("returns exit code 2 for invalid configured weights", async () => {
+    const cwd = await createTempProject();
+    const stderr: string[] = [];
+    await writeFile(join(cwd, "readme-health.config.json"), JSON.stringify({
+      ruleWeights: {
+        usage: 0
+      }
+    }), "utf8");
+
+    const exitCode = await runCli([], {
+      cwd,
+      stdout: () => undefined,
+      stderr: (text) => stderr.push(text)
+    });
+
+    expect(exitCode).toBe(2);
+    expect(stderr.join("")).toContain("usage");
+    expect(stderr.join("")).toContain("positive integer");
+  });
+
+  it("returns exit code 2 for invalid configured failUnder", async () => {
+    const cwd = await createTempProject();
+    const stderr: string[] = [];
+    await writeFile(join(cwd, "readme-health.config.json"), JSON.stringify({
+      failUnder: 101
+    }), "utf8");
+
+    const exitCode = await runCli([], {
+      cwd,
+      stdout: () => undefined,
+      stderr: (text) => stderr.push(text)
+    });
+
+    expect(exitCode).toBe(2);
+    expect(stderr.join("")).toContain("failUnder");
+    expect(stderr.join("")).toContain("0 to 100");
+  });
+
   it("prints fix suggestions for weak README findings", async () => {
     const cwd = await createTempProject(weakReadme);
     const stdout: string[] = [];

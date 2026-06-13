@@ -8,13 +8,17 @@ import { visit } from "unist-util-visit";
 
 import { evaluateLocalReferences } from "./localReferences.js";
 import { evaluateRules } from "./rules.js";
-import type { Finding, Grade, HealthReport, ReadmeFacts } from "./types.js";
+import type { Finding, Grade, HealthReport, ReadmeFacts, RuleWeights } from "./types.js";
 import { ReadmeInputError } from "./types.js";
 
 type NodeWithChildren = {
   children?: unknown[];
   value?: unknown;
   alt?: unknown;
+};
+
+type AnalyzeOptions = {
+  ruleWeights?: RuleWeights;
 };
 
 function isHeading(node: unknown): node is Heading {
@@ -135,10 +139,28 @@ function collectFacts(markdown: string): ReadmeFacts {
   return facts;
 }
 
-function createReport(filePath: string, findings: Finding[]): HealthReport {
-  const score = Math.round(
-    findings.reduce((total, item) => total + item.points, 0)
-  );
+function applyRuleWeights(findings: Finding[], ruleWeights: RuleWeights = {}): Finding[] {
+  return findings.map((finding) => {
+    const configuredMaxPoints = ruleWeights[finding.id];
+
+    if (configuredMaxPoints === undefined || finding.maxPoints === 0) {
+      return finding;
+    }
+
+    return {
+      ...finding,
+      points: Math.round(configuredMaxPoints * (finding.points / finding.maxPoints)),
+      maxPoints: configuredMaxPoints
+    };
+  });
+}
+
+function createReport(filePath: string, findings: Finding[], options: AnalyzeOptions = {}): HealthReport {
+  const weightedFindings = applyRuleWeights(findings, options.ruleWeights);
+  const scoredFindings = weightedFindings.filter((item) => item.maxPoints > 0);
+  const earnedPoints = scoredFindings.reduce((total, item) => total + item.points, 0);
+  const possiblePoints = scoredFindings.reduce((total, item) => total + item.maxPoints, 0);
+  const score = possiblePoints === 0 ? 0 : Math.round((earnedPoints / possiblePoints) * 100);
 
   return {
     filePath,
@@ -146,26 +168,26 @@ function createReport(filePath: string, findings: Finding[]): HealthReport {
     maxScore: 100,
     grade: gradeFor(score),
     summary: {
-      passed: findings.filter((item) => item.status === "pass").length,
-      warnings: findings.filter((item) => item.status === "warn").length,
-      failures: findings.filter((item) => item.status === "fail").length
+      passed: weightedFindings.filter((item) => item.status === "pass").length,
+      warnings: weightedFindings.filter((item) => item.status === "warn").length,
+      failures: weightedFindings.filter((item) => item.status === "fail").length
     },
-    findings
+    findings: weightedFindings
   };
 }
 
-export function analyzeMarkdown(markdown: string, filePath: string): HealthReport {
-  return createReport(filePath, evaluateRules(collectFacts(markdown)));
+export function analyzeMarkdown(markdown: string, filePath: string, options: AnalyzeOptions = {}): HealthReport {
+  return createReport(filePath, evaluateRules(collectFacts(markdown)), options);
 }
 
-export async function analyzeReadme(filePath: string): Promise<HealthReport> {
+export async function analyzeReadme(filePath: string, options: AnalyzeOptions = {}): Promise<HealthReport> {
   try {
     const markdown = await readFile(filePath, "utf8");
     const facts = collectFacts(markdown);
     return createReport(filePath, [
       ...evaluateRules(facts),
       await evaluateLocalReferences(facts, filePath)
-    ]);
+    ], options);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new ReadmeInputError(`Unable to read ${filePath}: ${message}`);

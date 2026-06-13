@@ -58,6 +58,32 @@ Print copy-pasteable snippets for warnings and failures:
 readme-health README.md --fix-suggestions
 ```
 
+## Configuration
+
+README Health automatically reads `readme-health.config.json` from the current working directory when the file exists.
+
+```json
+{
+  "failUnder": 80,
+  "ruleWeights": {
+    "usage": 20,
+    "license": 4
+  }
+}
+```
+
+Use `failUnder` to set a project default threshold. CLI flags take precedence:
+
+| Setting | Precedence | Behavior |
+| --- | --- | --- |
+| `--strict` | 1 | Uses threshold `85` |
+| `--fail-under <score>` | 2 | Uses the provided CLI threshold |
+| `failUnder` | 3 | Uses the config threshold when no CLI threshold is set |
+
+Use `ruleWeights` to tune scored rules while keeping the final report normalized to `0-100`. Supported rule IDs are `title`, `description`, `installation`, `usage`, `code-examples`, `code-fence-languages`, `license`, `contributing`, `tests`, `link-labels`, `image-alt-text`, and `heading-order`.
+
+Warning-only checks such as `local-references` are not configurable. Invalid JSON, unknown rule IDs, or invalid values exit with code `2` and print a clear error to stderr.
+
 ## GitHub Action
 
 Run README Health in CI:
@@ -168,12 +194,8 @@ README Health scores these areas:
 ## Exit Codes
 
 - `0`: analysis completed and the score met the configured threshold
-- `1`: analysis completed but the score was below `--fail-under` or `--strict`
-- `2`: the README could not be read or the CLI arguments were invalid
-
-## Roadmap
-
-- Config file support for project-specific rule weights
+- `1`: analysis completed but the score was below the active threshold
+- `2`: the README could not be read, CLI arguments were invalid, or `readme-health.config.json` was invalid
 
 ## Development
 

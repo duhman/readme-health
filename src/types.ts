@@ -12,6 +12,8 @@ export type Finding = {
   suggestion: string;
 };
 
+export type RuleWeights = Record<string, number>;
+
 export type HealthReport = {
   filePath: string;
   score: number;

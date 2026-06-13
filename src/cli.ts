@@ -6,6 +6,7 @@ import { Command, InvalidArgumentError, Option } from "commander";
 
 import packageJson from "../package.json" with { type: "json" };
 import { analyzeReadme } from "./analyze.js";
+import { ConfigError, loadConfig } from "./config.js";
 import { formatText } from "./formatText.js";
 import { ReadmeInputError } from "./types.js";
 
@@ -60,8 +61,11 @@ function createProgram(io: Required<CliIO>): {
     .action(async (targetPath: string, options: CliOptions) => {
       try {
         const absolutePath = resolve(io.cwd, targetPath);
-        const report = await analyzeReadme(absolutePath);
-        const threshold = options.strict ? 85 : options.failUnder;
+        const config = await loadConfig(io.cwd);
+        const report = await analyzeReadme(absolutePath, {
+          ruleWeights: config.ruleWeights
+        });
+        const threshold = options.strict ? 85 : options.failUnder ?? config.failUnder;
 
         if (options.format === "json") {
           io.stdout(`${JSON.stringify(report, null, 2)}\n`);
@@ -73,7 +77,7 @@ function createProgram(io: Required<CliIO>): {
           exitCode = 1;
         }
       } catch (error) {
-        if (error instanceof ReadmeInputError) {
+        if (error instanceof ReadmeInputError || error instanceof ConfigError) {
           io.stderr(`${error.message}\n`);
           exitCode = 2;
           return;

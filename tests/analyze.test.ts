@@ -132,4 +132,29 @@ This README has enough description text to make the project purpose clear.
       suggestion: expect.any(String)
     });
   });
+
+  it("preserves default scoring when no rule weights are provided", () => {
+    const defaultReport = analyzeMarkdown(weakReadme, "README.md");
+    const emptyConfigReport = analyzeMarkdown(weakReadme, "README.md", {
+      ruleWeights: {}
+    });
+
+    expect(emptyConfigReport.score).toBe(defaultReport.score);
+    expect(emptyConfigReport.findings).toEqual(defaultReport.findings);
+  });
+
+  it("applies rule weight overrides and normalizes the report score", () => {
+    const report = analyzeMarkdown(weakReadme, "README.md", {
+      ruleWeights: {
+        usage: 40
+      }
+    });
+
+    expect(finding(report, "usage")).toMatchObject({
+      points: 0,
+      maxPoints: 40
+    });
+    expect(report.maxScore).toBe(100);
+    expect(report.score).toBe(21);
+  });
 });
