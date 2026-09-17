@@ -156,6 +156,20 @@ Use a custom threshold:
     fail-under: "80"
 ```
 
+## PR check comment
+
+Copy [`.github/workflows/readme-health-pr-comment.yml`](./.github/workflows/readme-health-pr-comment.yml) into your repository to post a single sticky pull request comment when README or docs markdown changes.
+
+The workflow:
+
+- Runs `readme-health` with `--format github` for workflow annotations and a job summary
+- Compares the PR README score against the base branch when possible
+- Updates one comment identified by `<!-- readme-health-pr-comment -->` (no comment spam on new pushes)
+- Shows pass/fail vs threshold (default `80`), score delta, and up to five prioritized fix suggestions
+- Keeps passing PRs brief unless the README score drops vs the base branch
+
+Enable it on pull requests by committing the workflow file. You can also run it manually with `workflow_dispatch`.
+
 ## Daily Maintenance
 
 This repository includes a scheduled maintenance workflow that runs every day and can also be triggered manually from GitHub Actions.

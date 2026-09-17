@@ -1,6 +1,6 @@
 {
   "name": "readme-health",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A local CLI that scores README files for maintainer readiness.",
   "type": "module",
   "homepage": "https://github.com/duhman/readme-health#readme",
@@ -23,7 +23,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/cli.ts --format esm --dts --clean",
+    "build": "tsup src/cli.ts src/postPrCommentCli.ts --format esm --dts --clean",
     "dev": "tsx src/cli.ts",
     "prepack": "npm run build",
     "test": "vitest run",

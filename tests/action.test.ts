@@ -46,4 +46,16 @@ describe("GitHub Action wrapper", () => {
     expect(readmeWorkflow).toContain("actions/checkout@v6");
     expect(readmeWorkflow).toContain("actions/setup-node@v6");
   });
+
+  it("defines a sticky PR comment workflow for README diffs", async () => {
+    const workflow = await readFile(".github/workflows/readme-health-pr-comment.yml", "utf8");
+
+    expect(workflow).toContain("pull_request:");
+    expect(workflow).toContain("workflow_dispatch:");
+    expect(workflow).toContain("readme-health-pr-comment");
+    expect(workflow).toContain("uses: ./");
+    expect(workflow).toContain('fail-under: "80"');
+    expect(workflow).toContain("<!-- readme-health-pr-comment -->");
+    expect(workflow).toContain("postPrCommentCli.js");
+  });
 });
