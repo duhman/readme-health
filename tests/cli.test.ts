@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -295,6 +295,49 @@ describe("runCli", () => {
 
     expect(exitCode).toBe(0);
     expect(stdout.join("")).toContain("No fix suggestions needed.");
+  });
+
+  it("prints github workflow annotations and summary", async () => {
+    const cwd = await createTempProject(weakReadme);
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--format", "github"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+
+    const output = stdout.join("");
+
+    expect(exitCode).toBe(0);
+    expect(output).toContain("::error title=Usage::");
+    expect(output).toContain("## README Health");
+  });
+
+  it("writes the job summary when GITHUB_STEP_SUMMARY is set", async () => {
+    const cwd = await createTempProject(weakReadme);
+    const summaryPath = join(cwd, "step-summary.md");
+    const previous = process.env.GITHUB_STEP_SUMMARY;
+    process.env.GITHUB_STEP_SUMMARY = summaryPath;
+
+    try {
+      const exitCode = await runCli(["--format", "github"], {
+        cwd,
+        stdout: () => undefined,
+        stderr: () => undefined
+      });
+      const summary = await readFile(summaryPath, "utf8");
+
+      expect(exitCode).toBe(0);
+      expect(summary).toContain("## README Health");
+      expect(summary).toContain("| Usage |");
+    } finally {
+      if (previous === undefined) {
+        delete process.env.GITHUB_STEP_SUMMARY;
+      } else {
+        process.env.GITHUB_STEP_SUMMARY = previous;
+      }
+    }
   });
 
   it("prints the package version", async () => {

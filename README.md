@@ -1,6 +1,7 @@
 # README Health
 
 [![CI](https://github.com/duhman/readme-health/actions/workflows/ci.yml/badge.svg)](https://github.com/duhman/readme-health/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 README Health is a local command-line checker for maintainers who want a practical signal on whether a project README explains installation, usage, testing, licensing, and contribution basics.
 
@@ -8,16 +9,32 @@ It is designed for fast repository audits. Point it at a README file and it retu
 
 ## Installation
 
+Run the CLI directly from GitHub (no npm publish required):
+
 ```sh
-npm install -g readme-health
+npx github:duhman/readme-health
+```
+
+Pin a release tag for reproducible CI or local runs:
+
+```sh
+npx --package=github:duhman/readme-health@v0.2.2 readme-health README.md
 ```
 
 For local development from this repository:
 
 ```sh
+git clone https://github.com/duhman/readme-health.git
+cd readme-health
 npm install
 npm run build
 npm link
+```
+
+When the package is published to npm, global install will also work:
+
+```sh
+npm install -g readme-health
 ```
 
 ## Usage
@@ -50,6 +67,12 @@ Output JSON for automation:
 
 ```sh
 readme-health README.md --format json
+```
+
+Emit GitHub Actions annotations and a job summary (ideal for CI):
+
+```sh
+readme-health README.md --format github
 ```
 
 Print copy-pasteable snippets for warnings and failures:
@@ -86,7 +109,7 @@ Warning-only checks such as `local-references` are not configurable. Invalid JSO
 
 ## GitHub Action
 
-Run README Health in CI:
+Run README Health in CI with workflow annotations and a job summary:
 
 ```yaml
 name: README Health
@@ -107,16 +130,27 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - uses: duhman/readme-health@v0.2.1
+      - uses: duhman/readme-health@v0.2.2
         with:
           readme-path: README.md
           strict: "true"
 ```
 
+The action defaults to `--format github`, which prints workflow commands and writes a markdown summary to `$GITHUB_STEP_SUMMARY`.
+
+Use plain text logs instead:
+
+```yaml
+- uses: duhman/readme-health@v0.2.2
+  with:
+    readme-path: README.md
+    format: text
+```
+
 Use a custom threshold:
 
 ```yaml
-- uses: duhman/readme-health@v0.2.1
+- uses: duhman/readme-health@v0.2.2
   with:
     readme-path: docs/README.md
     fail-under: "80"
@@ -226,6 +260,10 @@ npm run dev -- README.md
 ## Contributing
 
 Issues and pull requests are welcome. Keep changes focused on local README analysis unless the issue explicitly expands scope. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow.
+
+## Security
+
+See [SECURITY.md](./SECURITY.md) for supported versions and how to report vulnerabilities.
 
 ## License
 

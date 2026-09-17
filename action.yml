@@ -11,9 +11,9 @@ inputs:
     required: false
     default: README.md
   format:
-    description: Output format. Use text for workflow logs or json for machine-readable output.
+    description: Output format. Use github for workflow annotations and job summary, text for plain logs, or json for machine-readable output.
     required: false
-    default: text
+    default: github
   fail-under:
     description: Exit with failure if the README score is below this value.
     required: false

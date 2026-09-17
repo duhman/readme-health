@@ -133,6 +133,43 @@ This README has enough description text to make the project purpose clear.
     });
   });
 
+  it("passes installation when npx github install commands are present", () => {
+    const markdown = `# Tool
+
+This README has enough description text to make the project purpose clear to maintainers and contributors.
+
+## Quick Start
+
+\`\`\`sh
+npx github:duhman/readme-health
+\`\`\`
+
+## Usage
+
+\`\`\`sh
+readme-health README.md
+\`\`\`
+
+## Tests
+
+\`\`\`sh
+npm test
+\`\`\`
+
+## Contributing
+
+Contributions are welcome.
+
+## License
+
+MIT
+`;
+
+    const report = analyzeMarkdown(markdown, "README.md");
+
+    expect(finding(report, "installation").status).toBe("pass");
+  });
+
   it("preserves default scoring when no rule weights are provided", () => {
     const defaultReport = analyzeMarkdown(weakReadme, "README.md");
     const emptyConfigReport = analyzeMarkdown(weakReadme, "README.md", {

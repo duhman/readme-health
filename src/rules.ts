@@ -31,7 +31,7 @@ const hasInstallSection = sectionPattern(
   /\b(install|installation|getting started|setup|quick start)\b/i
 );
 const hasInstallCommand = textPattern(
-  /\b(npm install|pnpm add|yarn add|pip install|brew install|cargo install|go install|docker run)\b/i
+  /\b(npm install|npx(?:\s+--package=[^\s]+)?\s+github:|pnpm add|pnpm dlx|yarn add|pip install|brew install|cargo install|go install|docker run)\b/i
 );
 const hasUsageSection = sectionPattern(/\b(usage|example|examples|cli|how to use)\b/i);
 const hasTestSection = sectionPattern(/\b(test|tests|testing|verification|quality|check)\b/i);
