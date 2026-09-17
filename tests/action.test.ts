@@ -10,6 +10,7 @@ describe("GitHub Action wrapper", () => {
     expect(action).toContain("format:");
     expect(action).toContain("fail-under:");
     expect(action).toContain("strict:");
+    expect(action).toContain("default: github");
   });
 
   it("declares Marketplace branding", async () => {

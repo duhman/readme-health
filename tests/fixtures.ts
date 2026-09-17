@@ -7,7 +7,7 @@ README Health is a focused command-line tool for maintainers who want a practica
 ## Installation
 
 \`\`\`sh
-npm install -g readme-health
+npx github:duhman/readme-health
 \`\`\`
 
 ## Usage

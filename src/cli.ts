@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { appendFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,11 +8,12 @@ import { Command, InvalidArgumentError, Option } from "commander";
 import packageJson from "../package.json" with { type: "json" };
 import { analyzeReadme } from "./analyze.js";
 import { ConfigError, loadConfig } from "./config.js";
+import { formatGithub, formatGithubJobSummary } from "./formatGithub.js";
 import { formatText } from "./formatText.js";
 import { ReadmeInputError } from "./types.js";
 
 type CliOptions = {
-  format: "text" | "json";
+  format: "text" | "json" | "github";
   failUnder?: number;
   fixSuggestions?: boolean;
   strict?: boolean;
@@ -47,7 +49,7 @@ function createProgram(io: Required<CliIO>): {
     .argument("[path]", "path to a README file", "README.md")
     .addOption(
       new Option("--format <format>", "output format")
-        .choices(["text", "json"])
+        .choices(["text", "json", "github"])
         .default("text")
     )
     .option("--fail-under <score>", "exit 1 if the score is below this number", parseFailUnder)
@@ -69,6 +71,14 @@ function createProgram(io: Required<CliIO>): {
 
         if (options.format === "json") {
           io.stdout(`${JSON.stringify(report, null, 2)}\n`);
+        } else if (options.format === "github") {
+          io.stdout(formatGithub(report));
+
+          const stepSummaryPath = process.env.GITHUB_STEP_SUMMARY;
+
+          if (stepSummaryPath) {
+            await appendFile(stepSummaryPath, formatGithubJobSummary(report), "utf8");
+          }
         } else {
           io.stdout(formatText(report, { includeFixSuggestions: options.fixSuggestions }));
         }
