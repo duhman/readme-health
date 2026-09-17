@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add Shields.io endpoint badge workflow and self-score badge on the README.
+- Add "Add to your repo" quick-start workflow snippet and release automation docs.
+- Add tag-triggered Release workflow for npm publish and GitHub Releases.
+
 ## 0.2.4
 
 - Add `--apply-fixes` to insert high-confidence missing README sections from local repo files.
