@@ -1,6 +1,7 @@
 # README Health
 
 [![CI](https://github.com/duhman/readme-health/actions/workflows/ci.yml/badge.svg)](https://github.com/duhman/readme-health/actions/workflows/ci.yml)
+[![README Health](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/duhman/readme-health/main/badge/readme-health.json)](https://github.com/duhman/readme-health)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 README Health is a local command-line checker for maintainers who want a practical signal on whether a project README explains installation, usage, testing, licensing, and contribution basics.
@@ -18,7 +19,7 @@ npx github:duhman/readme-health
 Pin a release tag for reproducible CI or local runs:
 
 ```sh
-npx --package=github:duhman/readme-health@v0.2.2 readme-health README.md
+npx --package=github:duhman/readme-health@v0.2.4 readme-health README.md
 ```
 
 For local development from this repository:
@@ -36,6 +37,55 @@ When the package is published to npm, global install will also work:
 ```sh
 npm install -g readme-health
 ```
+
+## Add to your repo
+
+Drop this workflow into `.github/workflows/readme-health.yml` to fail CI when your README score drops below 80:
+
+```yaml
+name: README Health
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  readme-health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: duhman/readme-health@v0.2.4
+        with:
+          readme-path: README.md
+          fail-under: "80"
+```
+
+For a sticky pull request comment with score delta and fix suggestions, copy [`.github/workflows/readme-health-pr-comment.yml`](./.github/workflows/readme-health-pr-comment.yml) and adjust paths or thresholds as needed.
+
+## README score badge
+
+Show your README score with a [Shields.io endpoint badge](https://shields.io/badges/endpoint-badge) backed by a JSON file on your default branch.
+
+1. Add a workflow (see [`.github/workflows/readme-health-badge.yml`](./.github/workflows/readme-health-badge.yml)) that runs `readme-health`, writes Shields endpoint JSON, and commits it on `main` when the score changes.
+2. Commit an initial endpoint file, for example `badge/readme-health.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "label": "readme health",
+  "message": "82/100",
+  "color": "green"
+}
+```
+
+3. Link the badge in your README (replace `OWNER/REPO`):
+
+```markdown
+[![README Health](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPO/main/badge/readme-health.json)](https://github.com/OWNER/REPO)
+```
+
+Shields reads the raw JSON URL on each request, so the badge updates after your workflow pushes a new score.
 
 ## Usage
 
@@ -139,7 +189,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - uses: duhman/readme-health@v0.2.2
+      - uses: duhman/readme-health@v0.2.4
         with:
           readme-path: README.md
           strict: "true"
@@ -150,7 +200,7 @@ The action defaults to `--format github`, which prints workflow commands and wri
 Use plain text logs instead:
 
 ```yaml
-- uses: duhman/readme-health@v0.2.2
+- uses: duhman/readme-health@v0.2.4
   with:
     readme-path: README.md
     format: text
@@ -159,7 +209,7 @@ Use plain text logs instead:
 Use a custom threshold:
 
 ```yaml
-- uses: duhman/readme-health@v0.2.2
+- uses: duhman/readme-health@v0.2.4
   with:
     readme-path: docs/README.md
     fail-under: "80"

@@ -1,0 +1,78 @@
+name: README Health Badge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - README.md
+      - badge/**
+      - .github/workflows/readme-health-badge.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readme-health-badge
+  cancel-in-progress: true
+
+jobs:
+  badge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Write Shields endpoint JSON
+        run: |
+          node dist/cli.js README.md --format json | node --input-type=module -e "
+            import { readFileSync, writeFileSync } from 'node:fs';
+
+            const report = JSON.parse(readFileSync(0, 'utf8'));
+            const score = report.score;
+            const color =
+              score >= 90 ? 'brightgreen' :
+              score >= 80 ? 'green' :
+              score >= 70 ? 'yellow' :
+              score >= 60 ? 'orange' :
+              'red';
+
+            const payload = {
+              schemaVersion: 1,
+              label: 'readme health',
+              message: \`\${score}/100\`,
+              color
+            };
+
+            writeFileSync(
+              'badge/readme-health.json',
+              \`\${JSON.stringify(payload, null, 2)}\n\`
+            );
+          "
+
+      - name: Commit badge update
+        run: |
+          if git diff --quiet badge/readme-health.json; then
+            echo "Badge unchanged."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add badge/readme-health.json
+          git commit -m "chore: update README health badge"
+          git push origin main

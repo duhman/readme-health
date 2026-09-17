@@ -48,6 +48,26 @@ Good rules should be:
 
 Inserted blocks are wrapped in HTML comments such as `<!-- readme-health:begin:license -->` so maintainers can review or remove them easily. Use `--dry-run` with `--apply-fixes` to preview unified-diff hunks before writing.
 
+## Releasing to npm
+
+Releases are automated when a maintainer pushes a version tag that matches `package.json` (for example `v0.2.4` for version `0.2.4`). The [Release workflow](./.github/workflows/release.yml) runs typecheck, tests, build, `npm publish --provenance`, and creates a GitHub Release.
+
+Configure **one** of these authentication options before the first publish:
+
+### npm trusted publishing (recommended)
+
+1. On [npmjs.com](https://www.npmjs.com/), open **readme-health** → **Settings** → **Publishing access** → **Trusted publishers**.
+2. Add a GitHub Actions trusted publisher for `duhman/readme-health` (workflow filename optional; restrict to `release.yml` if you prefer).
+3. Push a matching tag. The workflow uses OIDC (`permissions.id-token: write`) and `npm publish --provenance` — no repository secret required.
+
+### Classic token (fallback)
+
+1. Create an npm automation token with publish access to `readme-health`.
+2. Add it as the repository secret `NPM_TOKEN`.
+3. Push a matching tag. `setup-node` passes the token as `NODE_AUTH_TOKEN` for `npm publish`.
+
+Do not commit tokens or run `npm publish` from this cloud agent environment.
+
 ## Security
 
 Do not open public issues for security vulnerabilities. See [SECURITY.md](./SECURITY.md).
