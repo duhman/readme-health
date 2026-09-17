@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3
+
+- Add a pull request workflow that posts or updates a single sticky README Health comment.
+- Add PR comment formatting helpers with score delta, threshold status, and top fix suggestions.
+
 ## 0.2.2
 
 - Add `--format github` for GitHub Actions workflow annotations and job summaries.
