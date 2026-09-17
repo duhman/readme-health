@@ -81,6 +81,15 @@ Print copy-pasteable snippets for warnings and failures:
 readme-health README.md --fix-suggestions
 ```
 
+Insert high-confidence missing sections from local repo files:
+
+```sh
+readme-health README.md --apply-fixes --dry-run
+readme-health README.md --apply-fixes
+```
+
+`--apply-fixes` only adds clearly marked blocks for missing License, Contributing, or Installation sections when matching files exist in the repository root. It never rewrites existing prose. Preview unified-diff hunks with `--dry-run` before writing. See [CONTRIBUTING.md](./CONTRIBUTING.md#safe-fix-allowlist-v1) for the v1 allowlist.
+
 ## Configuration
 
 README Health automatically reads `readme-health.config.json` from the current working directory when the file exists.

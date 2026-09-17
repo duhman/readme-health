@@ -1,6 +1,6 @@
 {
   "name": "readme-health",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A local CLI that scores README files for maintainer readiness.",
   "type": "module",
   "homepage": "https://github.com/duhman/readme-health#readme",

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { appendFile } from "node:fs/promises";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +7,11 @@ import { Command, InvalidArgumentError, Option } from "commander";
 
 import packageJson from "../package.json" with { type: "json" };
 import { analyzeReadme } from "./analyze.js";
+import {
+  formatApplyFixesSummary,
+  formatUnifiedDiff,
+  prepareApplyFixes
+} from "./applyFixes.js";
 import { ConfigError, loadConfig } from "./config.js";
 import { formatGithub, formatGithubJobSummary } from "./formatGithub.js";
 import { formatText } from "./formatText.js";
@@ -16,6 +21,8 @@ type CliOptions = {
   format: "text" | "json" | "github";
   failUnder?: number;
   fixSuggestions?: boolean;
+  applyFixes?: boolean;
+  dryRun?: boolean;
   strict?: boolean;
 };
 
@@ -54,6 +61,8 @@ function createProgram(io: Required<CliIO>): {
     )
     .option("--fail-under <score>", "exit 1 if the score is below this number", parseFailUnder)
     .option("--fix-suggestions", "append copy-pasteable README fix snippets to text output")
+    .option("--apply-fixes", "insert high-confidence missing README sections from repo files")
+    .option("--dry-run", "preview README fix hunks without writing (requires --apply-fixes)")
     .option("--strict", "equivalent to --fail-under 85")
     .exitOverride()
     .configureOutput({
@@ -62,6 +71,12 @@ function createProgram(io: Required<CliIO>): {
     })
     .action(async (targetPath: string, options: CliOptions) => {
       try {
+        if (options.dryRun && !options.applyFixes) {
+          io.stderr("--dry-run requires --apply-fixes.\n");
+          exitCode = 2;
+          return;
+        }
+
         const absolutePath = resolve(io.cwd, targetPath);
         const config = await loadConfig(io.cwd);
         const report = await analyzeReadme(absolutePath, {
@@ -81,6 +96,34 @@ function createProgram(io: Required<CliIO>): {
           }
         } else {
           io.stdout(formatText(report, { includeFixSuggestions: options.fixSuggestions }));
+        }
+
+        if (options.applyFixes) {
+          const originalMarkdown = await readFile(absolutePath, "utf8");
+          const applyResult = await prepareApplyFixes(io.cwd, absolutePath, originalMarkdown, report);
+          const applyOutput = formatApplyFixesSummary(applyResult);
+
+          if (options.format === "text") {
+            io.stdout(`\n${applyOutput}`);
+          }
+
+          if (applyResult.changed) {
+            const diff = formatUnifiedDiff(absolutePath, originalMarkdown, applyResult.markdown);
+
+            if (options.dryRun) {
+              if (options.format === "text") {
+                io.stdout(`${diff}`);
+              }
+            } else {
+              await writeFile(absolutePath, applyResult.markdown, "utf8");
+
+              if (options.format === "text") {
+                io.stdout(`Applied README fixes to ${absolutePath}.\n`);
+              }
+            }
+          } else if (options.format === "text" && options.dryRun) {
+            io.stdout("");
+          }
         }
 
         if (threshold !== undefined && report.score < threshold) {

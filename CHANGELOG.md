@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4
+
+- Add `--apply-fixes` to insert high-confidence missing README sections from local repo files.
+- Add `--dry-run` to preview README fix hunks without writing changes.
+- Document the v1 safe-fix allowlist in CONTRIBUTING.md.
+
 ## 0.2.3
 
 - Add a pull request workflow that posts or updates a single sticky README Health comment.

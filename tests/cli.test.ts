@@ -340,6 +340,77 @@ describe("runCli", () => {
     }
   });
 
+  it("returns exit code 2 when --dry-run is used without --apply-fixes", async () => {
+    const cwd = await createTempProject();
+    const stderr: string[] = [];
+
+    const exitCode = await runCli(["--dry-run"], {
+      cwd,
+      stdout: () => undefined,
+      stderr: (text) => stderr.push(text)
+    });
+
+    expect(exitCode).toBe(2);
+    expect(stderr.join("")).toContain("--dry-run requires --apply-fixes");
+  });
+
+  it("prints dry-run hunks for high-confidence README fixes", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "readme-health-apply-cli-"));
+    await writeFile(join(cwd, "README.md"), "# Tiny Tool\n\nTiny Tool helps maintainers.\n", "utf8");
+    await writeFile(join(cwd, "LICENSE"), "MIT License\n", "utf8");
+    await writeFile(join(cwd, "CONTRIBUTING.md"), "# Contributing\n", "utf8");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--apply-fixes", "--dry-run"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+    const output = stdout.join("");
+
+    expect(exitCode).toBe(0);
+    expect(output).toContain("README fixes to apply:");
+    expect(output).toContain("--- a/README.md");
+    expect(output).toContain("<!-- readme-health:begin:contributing -->");
+    expect(await readFile(join(cwd, "README.md"), "utf8")).toBe("# Tiny Tool\n\nTiny Tool helps maintainers.\n");
+  });
+
+  it("writes README fixes when --apply-fixes is used without --dry-run", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "readme-health-apply-cli-"));
+    await writeFile(join(cwd, "README.md"), "# Tiny Tool\n\nTiny Tool helps maintainers.\n", "utf8");
+    await writeFile(join(cwd, "LICENSE"), "MIT License\n", "utf8");
+    await writeFile(join(cwd, "CONTRIBUTING.md"), "# Contributing\n", "utf8");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--apply-fixes"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+    const written = await readFile(join(cwd, "README.md"), "utf8");
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("Applied README fixes");
+    expect(written).toContain("## License");
+    expect(written).toContain("## Contributing");
+  });
+
+  it("reports a no-op when --apply-fixes finds nothing to change", async () => {
+    const cwd = await createTempProject(excellentReadme.replace("![Terminal report](./docs/report.png)\n\n", ""));
+    await writeFile(join(cwd, "LICENSE"), "MIT License\n", "utf8");
+    await writeFile(join(cwd, "CONTRIBUTING.md"), "# Contributing\n", "utf8");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--apply-fixes", "--dry-run"], {
+      cwd,
+      stdout: (text) => stdout.push(text),
+      stderr: () => undefined
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("No README fixes to apply.");
+  });
+
   it("prints the package version", async () => {
     const stdout: string[] = [];
 
