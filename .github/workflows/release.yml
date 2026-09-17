@@ -16,6 +16,9 @@ permissions:
   contents: write
   id-token: write
 
+# Trusted publisher must be configured on npmjs for package `readme-health`:
+# GitHub repo `duhman/readme-health`, workflow filename `release.yml`.
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -75,9 +78,7 @@ jobs:
           fi
 
       - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
 
       - name: Resolve release tag
         id: release_tag
