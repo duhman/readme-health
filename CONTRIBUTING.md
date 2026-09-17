@@ -66,6 +66,15 @@ Configure **one** of these authentication options before the first publish:
 2. Add it as the repository secret `NPM_TOKEN`.
 3. Push a matching tag. `setup-node` passes the token as `NODE_AUTH_TOKEN` for `npm publish`.
 
+### First publish when the Git tag already exists
+
+If a version tag (for example `v0.2.4`) was pushed before the Release workflow existed, pushing the tag again will not re-run the workflow. After `NPM_TOKEN` or trusted publishing is configured:
+
+1. Open **Actions** → **Release** → **Run workflow**.
+2. Set **confirm_publish** to **true** and run the workflow.
+
+The manual run checks out the tag that matches `package.json`, runs the same build/test/publish steps, publishes to npm, and skips creating a GitHub Release if one already exists for that tag.
+
 Do not commit tokens or run `npm publish` from this cloud agent environment.
 
 ## Security
