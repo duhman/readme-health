@@ -4,6 +4,13 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      confirm_publish:
+        description: Confirm npm publish (must be true)
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -14,8 +21,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Confirm manual publish
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "${{ inputs.confirm_publish }}" != "true" ]; then
+            echo "Set confirm_publish to true to run npm publish."
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Checkout release tag (manual)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          tag="v${version}"
+          if ! git rev-parse "${tag}" >/dev/null 2>&1; then
+            echo "No tag ${tag} found for package.json version ${version}"
+            exit 1
+          fi
+          git checkout "${tag}"
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -37,6 +65,7 @@ jobs:
         run: npm run build
 
       - name: Verify tag matches package version
+        if: github.event_name == 'push'
         run: |
           tag="${GITHUB_REF#refs/tags/v}"
           version="$(node -p "require('./package.json').version")"
@@ -50,7 +79,33 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Resolve release tag
+        id: release_tag
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            version="$(node -p "require('./package.json').version")"
+            echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for existing GitHub Release
+        id: release_check
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.release_tag.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "GitHub Release ${{ steps.release_tag.outputs.tag }} already exists; skipping create."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub Release
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && steps.release_check.outputs.exists != 'true')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
           generate_release_notes: true
+          fail_on_unmatched_files: false
